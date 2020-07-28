@@ -5,7 +5,7 @@ const app = getApp()
 Page({
   data: {
     motto: 'Hello World',
-    motto2: 'Hello World',
+    motto3: 'Hello World',
     userInfo: {},
     hasUserInfo: false,
     canIUse: wx.canIUse('button.open-type.getUserInfo')
@@ -51,5 +51,64 @@ Page({
       userInfo: e.detail.userInfo,
       hasUserInfo: true
     })
-  }
-})
+  },
+    getOpenIdTap: function (e) {
+      var that = this;
+      FORM_ID = e.detail.formId;//获取到formId 
+      console.log("formId1:"+FORM_ID)
+      that.setData({
+        formId: FORM_ID
+      })
+      wx.login({
+        success: function (res) {
+          wx.request({
+            //获取openid接口  
+            url: 'https://api.weixin.qq.com/sns/jscode2session',
+            data: {
+              appid: APP_ID,
+              secret: APP_SECRET,
+              js_code: res.code,
+              grant_type: 'authorization_code'
+            },
+            method: 'GET',
+            success: function (res) {
+              OPEN_ID = res.data.openid;//获取到的openid  
+              SESSION_KEY = res.data.session_key;//获取到session_key 
+              console.log("openid:" + OPEN_ID)
+              console.log("session_key:" + SESSION_KEY) 
+              that.setData({
+                openid: OPEN_ID,
+                session_key: SESSION_KEY
+              })
+            }
+          })
+        }
+      })
+    },
+    testSubmit: function (e) {
+      var that = this;
+      wx.request({
+        url: 'http://127.0.0.1:80/pushMsg',
+        method: 'POST',
+        data: {
+          access_token:null,
+          openid:OPEN_ID,
+          formid:FORM_ID
+        },
+        success: function (res) {
+          that.setData({
+            errcode: res.data.errcode,
+            errmsg: res.data.errmsg
+          })
+          console.log(res)
+        },
+        fail: function (err) {
+          console.log('request fail ', err);
+        },
+        complete: function (res) {
+          console.log("request completed!");
+        }
+  
+      })
+    }
+  })
